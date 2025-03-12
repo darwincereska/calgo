@@ -1,0 +1,13 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "calgo",
+  "outputfilename": "calgo",
+  "frontend:install": "npm install",
+  "frontend:build": "npm run build",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "http://localhost:4321",
+  "author": {
+    "name": "Darwin Cereska",
+    "email": "accfordarwin@gmail.com"
+  }
+}

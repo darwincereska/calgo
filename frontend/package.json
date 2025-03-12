@@ -1,0 +1,25 @@
+{
+  "name": "calgo",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "main": "",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.9.4",
+    "@astrojs/tailwind": "^6.0.0",
+    "astro": "^5.4.3",
+    "astro-icon": "^1.1.5",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.4.5"
+  },
+  "description": "",
+  "keywords": [],
+  "author": "Darwin Cereska"
+}
