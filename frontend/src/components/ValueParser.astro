@@ -1,0 +1,25 @@
+---
+
+---
+<script>
+async function calculateExpression(expression) {
+    try {
+        const response = await fetch('http://localhost:8888/api/calculate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ expression: expression }),
+        });
+        
+        const data = await response.json();
+        if (data.error) {
+            return `Error: ${data.error}`;
+        }
+        return data.unit ? `${data.result} ${data.unit}` : data.result.toString();
+    } catch (error) {
+        console.error('Calculation error:', error);
+        return 'Error: Failed to calculate';
+    }
+}
+</script>

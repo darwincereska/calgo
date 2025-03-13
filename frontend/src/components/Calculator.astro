@@ -1,0 +1,49 @@
+---
+import ExpressionInput from './ExpressionInput.astro';
+import ResultDisplay from './ResultDisplay.astro';
+import VariableList from './VariableList.astro';
+---
+
+<div class="calculator-container">
+    <ExpressionInput />
+    <ResultDisplay />
+    <VariableList />
+</div>
+
+<script>
+class Calculator {
+    private context = {
+        variables: new Map(),
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        ppi: 96,
+        emSize: 16
+    };
+
+    async evaluate(expression: string): Promise<any> {
+        try {
+            const response = await fetch('http://localhost:8888/api/calculate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    expression,
+                    context: this.context
+                }),
+            });
+
+            const result = await response.json();
+            if (result.variables) {
+                this.context.variables = new Map(Object.entries(result.variables));
+            }
+            return result;
+        } catch (error) {
+            console.error('Calculation error:', error);
+            return { error: 'Calculation failed' };
+        }
+    }
+}
+
+// Initialize calculator
+window.calculator = new Calculator();
+</script>

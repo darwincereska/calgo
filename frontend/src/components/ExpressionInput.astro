@@ -1,0 +1,214 @@
+---
+---
+<div class="expression-input relative w-full">
+    <div id="highlights" class="absolute top-0 left-0 w-full h-full pointer-events-none whitespace-pre-wrap p-4"></div>
+    <textarea 
+        id="input"
+        class="w-full h-full min-h-[400px] bg-transparent p-4 font-mono resize-none outline-none"
+        spellcheck="false"
+        placeholder="Enter calculation..."
+    ></textarea>
+</div>
+
+<script>
+interface CalcResult {
+    result: {
+        number: number;
+        unit?: string;
+        type: ValueType;
+        isError: boolean;
+        errorMsg?: string;
+    };
+    variables: Record<string, any>;
+    error?: string;
+}
+
+enum ValueType {
+    NumberType,
+    CurrencyType,
+    UnitType,
+    TimeType,
+    PercentageType,
+    DateType,
+    TemperatureType,
+    CommentType,
+    LabelType
+}
+
+const variablePattern = /^(\w+)\s*=\s*(.+)$/;
+const commentPattern = /^#|\/\//;
+const labelPattern = /^([^:]+):\s*(.+)$/;
+
+let variables = new Map<string, any>();
+let previousResult: any = null;
+
+async function evaluate(expression: string): Promise<CalcResult> {
+    try {
+        const response = await fetch('http://localhost:8888/api/calculate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                expression,
+                context: {
+                    variables: Object.fromEntries(variables),
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    ppi: 96,
+                    emSize: 16
+                }
+            })
+        });
+
+        const result = await response.json();
+        console.log('Raw result:', result); // Debug log
+
+        // Update variables
+        if (result.variables) {
+            Object.entries(result.variables).forEach(([key, value]) => {
+                variables.set(key, value);
+            });
+        }
+
+        return result;
+    } catch (error) {
+        console.error('Calculation error:', error);
+        return {
+            result: {
+                number: 0,
+                type: ValueType.NumberType,
+                isError: true,
+                errorMsg: 'Failed to calculate'
+            },
+            variables: {}
+        };
+    }
+}
+
+function formatResult(result: any): string {
+    if (!result || result.isError) {
+        return `<span class="text-red-500">${result?.errorMsg || 'Error'}</span>`;
+    }
+
+    let formattedValue = '';
+    const value = result.number;
+
+    switch (result.type) {
+        case ValueType.CurrencyType:
+            formattedValue = new Intl.NumberFormat('en-US', {
+                style: 'currency',  
+                currency: result.unit || 'USD'
+            }).format(value);
+            break;
+        case ValueType.UnitType:
+            formattedValue = `${value.toFixed(2)} ${result.unit}`;
+            break;
+        case ValueType.TimeType:
+        case ValueType.DateType:
+            formattedValue = new Date(value * 1000).toLocaleString();
+            break;
+        case ValueType.PercentageType:
+            formattedValue = `${value.toFixed(2)}%`;
+            break;
+        case ValueType.TemperatureType:
+            formattedValue = `${value.toFixed(2)}°${result.unit || 'C'}`;
+            break;
+        default:
+            formattedValue = value.toFixed(2);
+    }
+
+    return `<span class="result-box" onclick="copyToClipboard(this)">${formattedValue}</span>`;
+}
+
+function highlightSyntax(text: string): string {
+    if (commentPattern.test(text)) {
+        return `<span class="text-gray-500 italic">${text}</span>`;
+    }
+
+    let highlighted = text
+        .replace(/(\d+(\.\d+)?)/g, '<span class="text-blue-500 font-semibold">$1</span>')
+        .replace(/(\+|\-|\*|\/|\^)/g, '<span class="text-yellow-500 font-bold">$1</span>')
+        .replace(/\b(USD|EUR|GBP|CAD)\b/g, '<span class="text-emerald-500 font-semibold">$1</span>')
+        .replace(/\b(m|cm|km|kg|g|lb|oz)\b/g, '<span class="text-violet-500 font-semibold">$1</span>')
+        .replace(/\b(to|in|into|as)\b/g, '<span class="text-orange-500 font-semibold">$1</span>')
+        .replace(/\b(sqrt|sin|cos|tan|log|ln)\b/g, '<span class="text-green-600 font-semibold">$1</span>')
+        .replace(/\b([a-zA-Z_][a-zA-Z0-9_]*)\s*=/g, '<span class="text-purple-500 font-semibold">$1</span> =');
+
+    const labelMatch = text.match(labelPattern);
+    if (labelMatch) {
+        highlighted = `<span class="text-cyan-600 font-semibold">${labelMatch[1]}:</span> ${labelMatch[2]}`;
+    }
+
+    return highlighted;
+}
+
+const input = document.getElementById('input') as HTMLTextAreaElement;
+const highlights = document.getElementById('highlights');
+
+input?.addEventListener('input', async () => {
+    const lines = input.value.split('\n');
+    const processedLines = await Promise.all(lines.map(async (line) => {
+        const trimmedLine = line.trim();
+        if (!trimmedLine) return '';
+
+        // Highlight syntax
+        let highlighted = highlightSyntax(trimmedLine);
+
+        try {
+            // Evaluate expression
+            const result = await evaluate(trimmedLine);
+            console.log('Processed result:', result); // Debug log
+
+            if (result && result.result) {
+                const formattedResult = formatResult(result.result);
+                highlighted += ` = ${formattedResult}`;
+            }
+        } catch (error) {
+            console.error('Line processing error:', error);
+            highlighted += ` <span class="text-red-500">Error processing line</span>`;
+        }
+
+        return highlighted;
+    }));
+
+    if (highlights) {
+        highlights.innerHTML = processedLines.join('\n');
+    }
+});
+
+// Initial calculation on load
+document.addEventListener('DOMContentLoaded', () => {
+    if (input) {
+        input.value = '';
+        input.dispatchEvent(new Event('input'));
+    }
+});
+</script>
+
+<style>
+.expression-input {
+    font-family: 'SF Mono', 'Menlo', monospace;
+    position: relative;
+}
+
+#input {
+    color: transparent;
+    caret-color: theme('colors.gray.800');
+    background: transparent;
+}
+
+.dark #input {
+    caret-color: theme('colors.gray.200');
+}
+
+#highlights {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    pointer-events: none;
+}
+
+.result-box {
+    @apply bg-green-100 dark:bg-green-900 px-2 py-1 rounded cursor-pointer 
+    hover:bg-green-200 dark:hover:bg-green-800 transition-colors;
+}
+</style>

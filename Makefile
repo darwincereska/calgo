@@ -7,13 +7,16 @@ GOCLEAN=$(GOCMD) clean
 GOTEST=$(GOCMD) test
 GOGET=$(GOCMD) get
 
-all: cli app
+all: clean cli app
 
 cli: build/bin/$(APP)
 
 build/bin/$(APP): $(GODIR)/*.go
-	# mkdir -p build/bin
+	rm -rf build/bin/$(APP)
 	cd $(GODIR) && $(GOBUILD) -o ../build/bin/$(APP)
 
 app:
 	wails build --platform 'windows'
+
+clean:
+	rm -rf build/bin/*
