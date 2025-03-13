@@ -26,10 +26,16 @@ wails dev
 
 To build the application, you must run the following command:
 ```bash
-wails build
+make app
 ```
 
 To build the calgo-cli you must run:
 ``` bash
 make cli
 ```
+
+To build everything run:
+``` bash
+make all
+```
+files will be in `./build/bin`

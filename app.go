@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/calgo/backend/daemon"
+	daemon "calgo/backend/daemon"
 )
 
 type App struct {
