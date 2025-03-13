@@ -16,7 +16,7 @@ build/bin/$(APP): $(GODIR)/*.go
 	cd $(GODIR) && $(GOBUILD) -o ../build/bin/$(APP)
 
 app:
-	wails build --platform 'windows'
+	wails build
 
 clean:
 	rm -rf build/bin/*
