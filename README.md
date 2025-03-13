@@ -1,6 +1,5 @@
-# Astro and Wails using TypeScript Template ♥
+# Calgo
 
-![Preview Template](https://raw.githubusercontent.com/DiegPS/diegps-page/main/public/images/projects/app.webp)
 
 ## Installations in your machine
 
@@ -15,13 +14,6 @@ you must have installed the following tools:
 go install github.com/wailsapp/wails/v2/cmd/wails@latest
 ```
 
-## Using this template
-
-To use this template, you must run the following command:
-```bash
-wails init -n test -t https://github.com/DiegPS/wails-astro-ts
-```
-Note: We could optionally add `-ide vscode` or `-ide goland` to the end of this command if you wanted to add IDE support.
 
 ## Development
 
@@ -35,4 +27,9 @@ wails dev
 To build the application, you must run the following command:
 ```bash
 wails build
+```
+
+To build the calgo-cli you must run:
+``` bash
+make cli
 ```

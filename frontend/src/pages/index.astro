@@ -18,7 +18,7 @@ import { TITLE } from '../constants.ts'
 const syntaxHighlighting = {
 	keywords: {
 		metric: {
-		    words: ['meter','m','cm','centimeter','mm','millimeter','km','kilometer','kg','kilogram','g','gram','mg','milligram','l','liter','ml','milliliter','dl','deciliter'],
+			words: ['meter','m','cm','centimeter','mm','millimeter','km','kilometer','kg','kilogram','g','gram','mg','milligram','l','liter','ml','milliliter','dl','deciliter'],
 			color: 'text-purple-500'
 		},
 		imperial: {
@@ -38,15 +38,15 @@ const syntaxHighlighting = {
 			color: 'text-red-500',
 		},
 		addition: {
-		    words: ['and','with','plus'],
+						words: ['and','with','plus','sum'],
 			color: 'text-red-500',
 		},
 		multiplication: {
-		    words: ['mul','times','multiplied by'],
+						words: ['mul','times','multiplied by'],
 			color: 'text-red-500',
 		},
 		division: {
-		    words: ['divide','divided by','div'],
+						words: ['divide','divided by','div'],
 			color: 'text-red-500',
 		},
 	}
@@ -59,28 +59,42 @@ let definedLabels = new Set();
 input.addEventListener('input', () => {
 	let html = input.value;
 
+	// Process lines starting with #
+	html = html.split('\n').map(line => {
+		if (line.startsWith('#')) {
+			return `<span class="text-gray-500">${line}</span>`;
+		}
+		return line;
+	}).join('\n');
+
 	// Clear existing labels and rebuild from current content
 	definedLabels.clear();
 	const labelMatches = html.match(/\b\w+(?=:)/g) || [];
 	labelMatches.forEach(label => definedLabels.add(label));
 
-	// First highlight the label definitions
-	html = html.replace(/\b(\w+):/g, `<span class="text-cyan-900 dark:text-yellow-500 font-bold">$1:</span>`);
+	// Only apply syntax highlighting to non-comment lines
+	const lines = html.split('\n').map(line => {
+		if (!line.startsWith('<span class="text-gray-500">')) {
+			// First highlight the label definitions
+			line = line.replace(/\b(\w+):/g, `<span class="text-cyan-900 dark:text-yellow-500 font-bold">$1:</span>`);
 
-	// Then highlight valid label references (only if they exist in definedLabels)
-	definedLabels.forEach(label => {
-		const regex = new RegExp(`\\b${label}\\b(?!:)`, 'g');
-		html = html.replace(regex, `<span class="text-cyan-900 dark:text-yellow-500 font-bold">${label}</span>`);
-	});
+			// Then highlight valid label references
+			definedLabels.forEach(label => {
+				const regex = new RegExp(`\\b${label}\\b(?!:)`, 'g');
+				line = line.replace(regex, `<span class="text-cyan-900 dark:text-yellow-500 font-bold">${label}</span>`);
+			});
 
-	Object.values(syntaxHighlighting.keywords).forEach(category => {
-		category.words.forEach(word => {
-			const regex = new RegExp(`\\b${word}\\b`, 'gi');
-			html = html.replace(regex, `<span class="${category.color} font-bold">${word}</span>`);
-		});
-	});
+			Object.values(syntaxHighlighting.keywords).forEach(category => {
+				category.words.forEach(word => {
+					const regex = new RegExp(`\\b${word}\\b`, 'gi');
+					line = line.replace(regex, `<span class="${category.color} font-bold">${word}</span>`);
+				});
+			});
+		}
+		return line;
+	}).join('\n');
 
-	highlights.innerHTML = html;
+	highlights.innerHTML = lines;
 });
 </script>
 
