@@ -8,7 +8,7 @@ import { TITLE } from '../constants.ts'
 	<main class="flex">
 	<div class="m-8 h-[calc(100vh-6rem)] w-[calc(100vw-2.5rem)] relative" id="editor">
 		<div id="highlights" class="absolute top-0 left-0 w-full h-full pointer-events-none whitespace-pre-wrap"></div>
-		<textarea id="input" class="absolute top-0 left-0 w-full h-full bg-transparent text-black resize-none outline-none" spellcheck="false"></textarea>
+		<textarea id="input" class="absolute top-0 left-0 w-full h-full bg-transparent caret-black text-gray-500 dark:text-white dark:caret-white resize-none outline-none" spellcheck="false"></textarea>
 	</div>
 	<BottomBar />
 	</main>
@@ -17,30 +17,65 @@ import { TITLE } from '../constants.ts'
 <script>
 const syntaxHighlighting = {
 	keywords: {
-		control: {
-			words: ['if', 'else', 'for', 'while'],
+		metric: {
+		    words: ['meter','m','cm','centimeter','mm','millimeter','km','kilometer','kg','kilogram','g','gram','mg','milligram','l','liter','ml','milliliter','dl','deciliter'],
 			color: 'text-purple-500'
 		},
-		declaration: {
-			words: ['function', 'let', 'const', 'var'],
+		imperial: {
+			words: ['foot','ft','feet','inch','in','inches','mile','mi','miles','yard','yd','yards','pound','lb','pounds','oz','ounce','ounces','gallon','gal','gallons','quart','qt','pint','pt','cup'],
+			color: 'text-purple-500'
+		},
+		currency: {
+			words: ['USD','CAD','EUR'],
+			color: 'text-blue-400'
+		},
+		convert: {
+			words: ['to','into','as'],
 			color: 'text-blue-500'  
 		},
-		operators: {
-			words: ['return', 'new', 'delete', 'typeof'],
+		subtraction: {
+			words: ['minus','subtract','without'],
 			color: 'text-red-500',
-		}
+		},
+		addition: {
+		    words: ['and','with','plus'],
+			color: 'text-red-500',
+		},
+		multiplication: {
+		    words: ['mul','times','multiplied by'],
+			color: 'text-red-500',
+		},
+		division: {
+		    words: ['divide','divided by','div'],
+			color: 'text-red-500',
+		},
 	}
 };
 
 const input = document.getElementById('input');
 const highlights = document.getElementById('highlights');
+let definedLabels = new Set();
 
 input.addEventListener('input', () => {
 	let html = input.value;
 
+	// Clear existing labels and rebuild from current content
+	definedLabels.clear();
+	const labelMatches = html.match(/\b\w+(?=:)/g) || [];
+	labelMatches.forEach(label => definedLabels.add(label));
+
+	// First highlight the label definitions
+	html = html.replace(/\b(\w+):/g, `<span class="text-cyan-900 dark:text-yellow-500 font-bold">$1:</span>`);
+
+	// Then highlight valid label references (only if they exist in definedLabels)
+	definedLabels.forEach(label => {
+		const regex = new RegExp(`\\b${label}\\b(?!:)`, 'g');
+		html = html.replace(regex, `<span class="text-cyan-900 dark:text-yellow-500 font-bold">${label}</span>`);
+	});
+
 	Object.values(syntaxHighlighting.keywords).forEach(category => {
 		category.words.forEach(word => {
-			const regex = new RegExp(`\\b${word}\\b`, 'g');
+			const regex = new RegExp(`\\b${word}\\b`, 'gi');
 			html = html.replace(regex, `<span class="${category.color} font-bold">${word}</span>`);
 		});
 	});
@@ -49,15 +84,36 @@ input.addEventListener('input', () => {
 });
 </script>
 
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+		const input = document.getElementById('input') as HTMLTextAreaElement;
+		input.value = '';
+		input.dispatchEvent(new Event('input'));
+});
+</script>
+
 <style>
+@font-face {
+	font-family: 'SF Pro';
+	src: url('/fonts/SFMonoRegular.otf') format('opentype');
+	font-weight: normal;
+}
+
+/* @font-face {
+	font-family: 'SF Pro';
+	src: url('/fonts/SF_Pro_Bold.OTF') format('opentype'); 
+	font-weight: bold;
+} */
+
 #input {
-	@apply p-4 font-mono text-base;
+	@apply p-4 font-['SF_Pro'] text-base;
 	border: none;
 	color: transparent;
 	caret-color: black;
+	@apply dark:caret-white;
 }
 
 #highlights {
-	@apply p-4 font-mono text-base;
+	@apply p-4 font-['SF_Pro'] text-base;
 }
 </style>
