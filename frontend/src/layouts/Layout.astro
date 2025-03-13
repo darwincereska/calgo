@@ -7,14 +7,22 @@ const { title } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en" class="text-white font-nunito">
+<html lang="en">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="description" content="Astro description" />
 		<meta name="viewport" content="width=device-width" />
 		<title>{title}</title>
+		<script is:inline>
+			// On page load or when changing themes, best to add inline in `head` to avoid FOUC
+			if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+				document.documentElement.classList.add('dark');
+			} else {
+				document.documentElement.classList.remove('dark');
+			}
+		</script>
 	</head>
-	<body class="bg-primary min-h-screen">
+	<body class="min-h-screen bg-white dark:bg-dark_primary text-black dark:text-white font-nunito transition-colors duration-300">
 		<slot />
 	</body>
 </html>
@@ -31,3 +39,4 @@ const { title } = Astro.props;
 		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 	}
 </style>
+
